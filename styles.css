@@ -1,0 +1,1223 @@
+/**
+ * Naval command centre styling.
+ *
+ * Everything here is drawn with CSS and project authored SVG: gradients for the
+ * ocean depth, borders and shadows for the panels, and fluid grids so the same
+ * layout works from a phone in portrait to a wide desktop.
+ */
+
+:root {
+  /* Palette: deep ocean night with sonar accents. */
+  --color-abyss: #04121f;
+  --color-trench: #071b2c;
+  --color-deep: #0a2033;
+  --color-hull: #123049;
+  --color-hull-strong: #1b4667;
+  --color-water: #16405f;
+  --color-water-hover: #1f5b82;
+  --color-sonar: #46d5c2;
+  --color-sonar-strong: #7bf0e0;
+  --color-signal: #ffd166;
+  --color-alert: #ef6461;
+  --color-steel: #8fb2c9;
+  --color-text: #e8f2fa;
+  --color-text-muted: #a8c1d2;
+
+  /* Typography */
+  --font-display: 'Segoe UI Semibold', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --letter-spacing-wide: 0.14em;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* Shape */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1.125rem;
+  --border-hairline: 1px solid rgb(143 178 201 / 25%);
+  --border-panel: 1px solid rgb(143 178 201 / 22%);
+  --shadow-panel: 0 18px 40px rgb(2 10 18 / 55%);
+  --shadow-inset: inset 0 1px 0 rgb(232 242 250 / 8%);
+
+  /* Boards scale with their panel, so no fixed cell size is needed. */
+  --label-size: 1.15rem;
+  --board-max: 30rem;
+  --cell-gap: 2px;
+
+  /* Motion: disabled wholesale by the reduced motion query at the end. */
+  --duration-fast: 120ms;
+  --duration-medium: 260ms;
+  --duration-slow: 900ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100svh;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-abyss);
+  background-image:
+    radial-gradient(ellipse 90% 60% at 18% -15%, rgb(27 70 103 / 65%), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 85% 0%, rgb(70 213 194 / 12%), transparent 65%),
+    linear-gradient(180deg, var(--color-trench), var(--color-abyss) 55%, #020b14);
+  background-attachment: fixed;
+}
+
+/* Sonar grid overlay: two hairline gratings, no images involved. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgb(143 178 201 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(143 178 201 / 5%) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse at 50% 0%, #000, transparent 75%);
+}
+
+.app {
+  position: relative;
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: clamp(var(--space-4), 3vw, var(--space-6));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--space-4), 2.5vw, var(--space-5));
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+h1 {
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  background: linear-gradient(180deg, var(--color-text), var(--color-steel));
+  background-clip: text;
+  color: transparent;
+}
+
+h2 {
+  font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+h3 {
+  font-size: 0.8rem;
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-steel);
+}
+
+/* Header */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border-hairline);
+}
+
+.app-header__crest {
+  flex: none;
+  width: clamp(2.5rem, 8vw, 3.25rem);
+  color: var(--color-sonar);
+}
+
+.app-header__crest svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0 10px rgb(70 213 194 / 35%));
+}
+
+.crest__ring {
+  fill: rgb(70 213 194 / 6%);
+  stroke: currentcolor;
+  stroke-width: 1.5;
+}
+
+.crest__ring--inner {
+  fill: none;
+  stroke-opacity: 0.45;
+  stroke-dasharray: 3 4;
+  transform-origin: 24px 24px;
+  animation: sweep 12s linear infinite;
+}
+
+.crest__needle {
+  fill: currentcolor;
+}
+
+.crest__needle--dim {
+  fill: var(--color-steel);
+  opacity: 0.55;
+}
+
+.crest__core {
+  fill: var(--color-signal);
+}
+
+.app-header__eyebrow {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-sonar);
+}
+
+/* Command console: controls plus status */
+
+.console {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) clamp(var(--space-3), 2vw, var(--space-4));
+  background: linear-gradient(180deg, rgb(18 48 73 / 72%), rgb(7 27 44 / 78%));
+  border: var(--border-panel);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-panel), var(--shadow-inset);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.controls__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.controls__group--end {
+  margin-left: auto;
+}
+
+.controls button,
+.difficulty select {
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  background: linear-gradient(180deg, var(--color-hull-strong), var(--color-hull));
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-inset);
+  cursor: pointer;
+}
+
+/* Native popup: dark scheme plus explicit option colours keep both options
+   readable, including the one under the pointer. */
+.difficulty select {
+  color-scheme: dark;
+}
+
+.difficulty option {
+  color: var(--color-text);
+  background-color: var(--color-hull-strong);
+}
+
+.controls button:hover:not(:disabled),
+.difficulty select:hover:not(:disabled) {
+  background: linear-gradient(180deg, #235a83, var(--color-hull-strong));
+  border-color: rgb(70 213 194 / 45%);
+}
+
+.controls button {
+  transition:
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.controls button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.controls button:disabled,
+.difficulty select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.button--primary {
+  color: var(--color-abyss);
+  background: linear-gradient(180deg, var(--color-sonar-strong), var(--color-sonar));
+  border-color: transparent;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.button--primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #9ff7ea, var(--color-sonar-strong));
+  border-color: transparent;
+}
+
+.difficulty {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.difficulty__label {
+  font-size: 0.7rem;
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+}
+
+/* Status strip */
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background-color: rgb(4 18 31 / 55%);
+  border: var(--border-hairline);
+  border-left: 3px solid var(--color-sonar);
+  border-radius: var(--radius-md);
+}
+
+.status p {
+  margin: 0;
+}
+
+.status__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status__turn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.2rem var(--space-3);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-sonar);
+  background-color: rgb(70 213 194 / 12%);
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+}
+
+.status__turn::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: currentcolor;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 currentcolor;
+}
+
+.status__turn[data-turn='player']::before {
+  animation: pulse var(--duration-slow) var(--ease-out) infinite;
+}
+
+.status__turn[data-turn='enemy'] {
+  color: var(--color-signal);
+  background-color: rgb(255 209 102 / 12%);
+}
+
+.status__turn[data-phase='victory'] {
+  color: var(--color-sonar);
+}
+
+.status__turn[data-phase='defeat'] {
+  color: var(--color-alert);
+  background-color: rgb(239 100 97 / 14%);
+}
+
+.status__difficulty,
+.status__resumed {
+  padding: 0.2rem var(--space-2);
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+}
+
+.status__difficulty {
+  color: var(--color-steel);
+  transition: color var(--duration-fast) ease;
+}
+
+.status__difficulty[data-difficulty='hard'] {
+  color: var(--color-alert);
+}
+
+.status__resumed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-sonar);
+  animation: surface var(--duration-medium) var(--ease-out) both;
+}
+
+.status__resumed[hidden] {
+  display: none;
+}
+
+/* Sonar ping drawn with a single element, no external assets. */
+.status__resumed::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 1px solid currentcolor;
+  border-top-color: transparent;
+  border-radius: 50%;
+}
+
+.status__message {
+  flex: 1 1 14rem;
+  min-height: 1.25rem;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+/* Theatre: one panel per side */
+
+.theatre {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: clamp(var(--space-4), 2.5vw, var(--space-5));
+  align-items: start;
+}
+
+.panel {
+  position: relative;
+  /* Keeps the board layers (hulls, markers, focus) stacked inside the panel. */
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: clamp(var(--space-3), 2vw, var(--space-4));
+  background: linear-gradient(180deg, rgb(18 48 73 / 55%), rgb(7 27 44 / 82%));
+  border: var(--border-panel);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-panel), var(--shadow-inset);
+}
+
+/* Hairline corner brackets, drawn with a single gradient layer. */
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: var(--space-2);
+  pointer-events: none;
+  border: 1px solid rgb(70 213 194 / 14%);
+  border-radius: var(--radius-lg);
+  mask-image: linear-gradient(135deg, #000 12%, transparent 12% 88%, #000 88%);
+}
+
+.panel--enemy {
+  border-color: rgb(239 100 97 / 22%);
+}
+
+/* The board waiting for a shot is lit so the turn reads at a glance. */
+.panel[data-engaged] {
+  border-color: rgb(70 213 194 / 45%);
+  box-shadow:
+    var(--shadow-panel),
+    var(--shadow-inset),
+    0 0 0 1px rgb(70 213 194 / 25%),
+    0 0 28px rgb(70 213 194 / 14%);
+}
+
+.panel--enemy[data-engaged] {
+  border-color: rgb(255 209 102 / 45%);
+  box-shadow:
+    var(--shadow-panel),
+    var(--shadow-inset),
+    0 0 0 1px rgb(255 209 102 / 25%),
+    0 0 28px rgb(255 209 102 / 14%);
+}
+
+.panel--enemy::before {
+  border-color: rgb(239 100 97 / 16%);
+}
+
+.panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-hairline);
+}
+
+.panel--enemy .panel__header h2 {
+  color: var(--color-signal);
+}
+
+.panel__strength {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.panel__strength[data-critical='true'] {
+  color: var(--color-alert);
+}
+
+/* Boards */
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--label-size) repeat(10, minmax(0, 1fr));
+  grid-template-rows: var(--label-size) repeat(10, auto);
+  gap: var(--cell-gap);
+  width: 100%;
+  max-width: var(--board-max);
+  margin: 0 auto;
+  padding: var(--space-2);
+  background:
+    radial-gradient(ellipse 70% 55% at 30% 0%, rgb(70 213 194 / 10%), transparent 70%),
+    linear-gradient(180deg, rgb(6 24 39 / 55%), rgb(4 18 31 / 82%)),
+    repeating-linear-gradient(45deg, transparent 0 8px, rgb(70 213 194 / 4%) 8px 16px);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow:
+    inset 0 0 40px rgb(2 10 18 / 60%),
+    var(--shadow-panel);
+}
+
+.board__label,
+.board__corner {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: clamp(0.5rem, 1.6vw, 0.65rem);
+  letter-spacing: 0.06em;
+  color: var(--color-steel);
+}
+
+.cell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  background-color: var(--color-water);
+  background-image: linear-gradient(160deg, rgb(70 213 194 / 12%), transparent 55%);
+  border: 1px solid rgb(4 18 31 / 80%);
+  border-radius: 3px;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.cell:disabled,
+.cell[aria-disabled='true'] {
+  cursor: default;
+}
+
+.cell:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: var(--color-water-hover);
+  box-shadow: 0 0 0 1px rgb(70 213 194 / 55%);
+  transform: scale(1.08);
+  z-index: 4;
+}
+
+/* Water below a hull only carries a faint wake; the silhouette does the rest. */
+.cell--ship {
+  background-color: #17435f;
+  border-color: rgb(232 242 250 / 22%);
+}
+
+/*
+ * Hulls live on their own grid layer above the water: it mirrors the board
+ * tracks, so a ship spans exactly its cells without disturbing cell placement.
+ */
+.board__hulls {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: var(--label-size) repeat(10, minmax(0, 1fr));
+  grid-template-rows: var(--label-size) repeat(10, 1fr);
+  gap: var(--cell-gap);
+  padding: var(--space-2);
+  pointer-events: none;
+}
+
+.board__ship {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  filter: drop-shadow(0 2px 3px rgb(4 18 31 / 65%));
+}
+
+.board__ship svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--color-steel);
+}
+
+.board__hulls--wrecks {
+  z-index: 6;
+}
+
+.board__ship--sunk {
+  opacity: 0.5;
+  filter: none;
+  animation: sink var(--duration-medium) var(--ease-out);
+}
+
+.board__ship--sunk svg {
+  color: #e3e8ec;
+}
+
+/* A ship still afloat shows soot where it was hit, but no fire. */
+.board__ship--damaged .ship-shape__damage {
+  opacity: 0.85;
+}
+
+.board__ship--damaged .ship-shape__fire,
+.board__ship--damaged .ship-shape__fire-core {
+  display: none;
+}
+
+.ship-shape__hull {
+  fill: color-mix(in srgb, currentcolor 34%, #08243a);
+  stroke: color-mix(in srgb, currentcolor 85%, var(--color-abyss));
+  stroke-width: 0.5;
+}
+
+.ship-shape__deck {
+  fill: color-mix(in srgb, currentcolor 28%, #26455e);
+}
+
+.ship-shape__flightdeck {
+  fill: color-mix(in srgb, currentcolor 26%, var(--color-abyss));
+}
+
+.ship-shape__tower,
+.ship-shape__fin,
+.ship-shape__plane {
+  fill: color-mix(in srgb, currentcolor 92%, var(--color-abyss));
+}
+
+.ship-shape__detail,
+.ship-shape__gunhouse {
+  fill: color-mix(in srgb, currentcolor 72%, var(--color-abyss));
+}
+
+.ship-shape__turret,
+.ship-shape__funnel,
+.ship-shape__mount {
+  fill: color-mix(in srgb, currentcolor 30%, var(--color-abyss));
+}
+
+.ship-shape__barrel {
+  fill: color-mix(in srgb, currentcolor 55%, var(--color-abyss));
+}
+
+.ship-shape__line {
+  fill: none;
+  stroke: color-mix(in srgb, currentcolor 38%, var(--color-abyss));
+  stroke-width: 0.9;
+  stroke-linecap: round;
+}
+
+.ship-shape__line--dashed {
+  stroke-dasharray: 3 3;
+  stroke-width: 0.8;
+}
+
+.board__ship--sunk .ship-shape__deck {
+  fill: #b9c0c5;
+}
+
+.board__ship--sunk .ship-shape__hull {
+  fill: #8e979d;
+  stroke: #6a7379;
+}
+
+.board__ship--sunk .ship-shape__flightdeck {
+  fill: #9aa3a9;
+}
+
+/* Battle damage rides with the hull and only shows on a sunk ship. */
+.ship-shape__damage {
+  opacity: 0;
+}
+
+.board__ship--sunk .ship-shape__damage,
+.ship--sunk .ship-shape__damage {
+  opacity: 1;
+}
+
+.ship-shape__scorch {
+  fill: #14181c;
+  opacity: 0.7;
+}
+
+.ship-shape__fire {
+  fill: #f08a2c;
+}
+
+.ship-shape__fire-core {
+  fill: #ffe08a;
+}
+
+/* Outranks the hover rule so the cell under the cursor shows the preview. */
+.cell.cell--preview-valid:not(:disabled):not([aria-disabled='true']) {
+  background: var(--color-sonar);
+  box-shadow: 0 0 12px rgb(70 213 194 / 55%);
+}
+
+.cell.cell--preview-invalid:not(:disabled):not([aria-disabled='true']) {
+  background: var(--color-alert);
+  box-shadow: 0 0 12px rgb(239 100 97 / 55%);
+}
+
+/* Battle states stay above the hull overlay so nothing they show is covered. */
+.cell--hit,
+.cell--miss,
+.cell--sunk,
+.cell--preview-valid,
+.cell--preview-invalid {
+  z-index: 3;
+}
+
+/* Shot markers: a sonar ring for a miss, a burning cross for a hit. */
+.cell--miss::after,
+.cell--hit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+
+.cell--miss {
+  background-color: #0d2a41;
+  background-image: none;
+}
+
+/* Sonar ping: a ring with the returning dot at its centre. */
+.cell--miss::after {
+  width: 34%;
+  height: 34%;
+  background: radial-gradient(circle, var(--color-steel) 0 22%, transparent 24%);
+  border: 1.5px solid rgb(143 178 201 / 75%);
+  border-radius: 50%;
+  animation: splash var(--duration-medium) var(--ease-out);
+}
+
+.cell.cell--hit {
+  background: radial-gradient(circle, #ffbe7d, var(--color-alert) 70%);
+  border-color: var(--color-signal);
+  box-shadow: 0 0 10px rgb(239 100 97 / 55%);
+}
+
+.cell--hit::after {
+  width: 42%;
+  height: 42%;
+  background:
+    linear-gradient(45deg, transparent 44%, var(--color-abyss) 44% 56%, transparent 56%),
+    linear-gradient(-45deg, transparent 44%, var(--color-abyss) 44% 56%, transparent 56%);
+  animation: blast var(--duration-medium) var(--ease-out);
+}
+
+.cell.cell--sunk {
+  background: linear-gradient(180deg, #8b2327, #3d0e10);
+  border-color: var(--color-alert);
+  box-shadow: inset 0 0 8px rgb(0 0 0 / 60%);
+  animation: sink var(--duration-medium) var(--ease-out);
+}
+
+/* The shot that was just fired keeps a halo until the next one lands. */
+.cell.cell--latest {
+  z-index: 5;
+  box-shadow:
+    0 0 0 2px var(--color-signal),
+    0 0 14px rgb(255 209 102 / 45%);
+  animation: ping var(--duration-slow) var(--ease-out);
+}
+
+/* Fleet roster */
+
+.fleet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fleet__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.fleet__hint[hidden] {
+  display: none;
+}
+
+.fleet kbd {
+  padding: 0 var(--space-1);
+  font-family: inherit;
+  color: var(--color-signal);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+}
+
+.fleet-roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-2);
+}
+
+.ship {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  text-align: left;
+  color: var(--color-text);
+  background: linear-gradient(180deg, rgb(27 70 103 / 55%), rgb(18 48 73 / 75%));
+  border: var(--border-hairline);
+  border-left: 3px solid rgb(143 178 201 / 35%);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease;
+}
+
+div.ship {
+  cursor: default;
+}
+
+button.ship:hover {
+  background: linear-gradient(180deg, rgb(35 90 131 / 70%), rgb(27 70 103 / 80%));
+}
+
+.ship__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.ship__icon {
+  flex: none;
+  width: calc(0.55rem * var(--ship-length, 3));
+  height: auto;
+  color: var(--color-steel);
+}
+
+.ship__name {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ship__status {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.ship__pips {
+  display: flex;
+  gap: 3px;
+}
+
+.ship__pip {
+  width: 0.8rem;
+  height: 0.35rem;
+  background-color: rgb(143 178 201 / 45%);
+  border-radius: 1px;
+  transition: background-color var(--duration-medium) ease;
+}
+
+.ship .ship__pip--hit {
+  background-color: var(--color-alert);
+}
+
+.ship[data-state='placed'] {
+  border-left-color: var(--color-sonar);
+}
+
+.ship[data-state='placed'] .ship__pip {
+  background-color: var(--color-sonar);
+}
+
+.ship[data-state='standby'] {
+  opacity: 0.7;
+}
+
+.ship[data-state='intact'] {
+  border-left-color: var(--color-sonar);
+}
+
+.ship[data-state='intact'] .ship__status {
+  color: var(--color-sonar);
+}
+
+.ship[data-state='damaged'] {
+  border-left-color: var(--color-signal);
+}
+
+.ship[data-state='damaged'] .ship__status {
+  color: var(--color-signal);
+}
+
+/* Hard mode: an enemy ship stays classified until it is sunk. */
+.ship[data-state='unknown'] {
+  border-left-color: rgb(143 178 201 / 45%);
+}
+
+.ship--concealed .ship__icon,
+.ship--concealed .ship__pips {
+  visibility: hidden;
+}
+
+.ship--concealed .ship__name,
+.ship--concealed .ship__status {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.ship--selected {
+  border-color: var(--color-sonar);
+  border-left-color: var(--color-sonar);
+  box-shadow: 0 0 0 1px rgb(70 213 194 / 45%);
+}
+
+.ship--sunk {
+  border-left-color: var(--color-alert);
+  opacity: 0.75;
+}
+
+.ship--sunk .ship__icon {
+  color: var(--color-alert);
+  transform: rotate(-8deg);
+}
+
+.ship--sunk .ship__name {
+  text-decoration: line-through;
+}
+
+.ship--sunk .ship__status {
+  color: var(--color-alert);
+}
+
+/* Result overlay */
+
+.result {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 45%, rgb(9 34 54 / 92%), transparent 75%),
+    rgb(4 18 31 / 92%);
+}
+
+.result[hidden] {
+  display: none;
+}
+
+.result__card {
+  max-width: 26rem;
+  padding: clamp(var(--space-5), 5vw, var(--space-6));
+  text-align: center;
+  background-color: var(--color-deep);
+  background-image: radial-gradient(circle at 50% 0%, var(--color-hull), transparent 70%);
+  border: var(--border-panel);
+  border-top: 3px solid var(--color-sonar);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-panel);
+  animation: rise var(--duration-medium) var(--ease-out);
+}
+
+.result[data-outcome='defeat'] .result__card {
+  border-top-color: var(--color-alert);
+}
+
+.result__seal {
+  display: block;
+  width: 4.5rem;
+  margin: 0 auto var(--space-3);
+  color: var(--color-sonar);
+}
+
+.result[data-outcome='defeat'] .result__seal {
+  color: var(--color-alert);
+}
+
+.result__seal svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.seal__ring {
+  fill: rgb(70 213 194 / 6%);
+  stroke: currentcolor;
+  stroke-width: 1.5;
+}
+
+.seal__wave {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.5;
+  opacity: 0.5;
+}
+
+.seal__wave--low {
+  opacity: 0.25;
+}
+
+.seal__star {
+  fill: currentcolor;
+}
+
+.result__eyebrow {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-steel);
+}
+
+.result__title {
+  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.result__detail {
+  margin: var(--space-3) 0 var(--space-5);
+  color: var(--color-text-muted);
+}
+
+.result__card button {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-5);
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-abyss);
+  background: linear-gradient(180deg, var(--color-sonar-strong), var(--color-sonar));
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.result[data-outcome='defeat'] .result__card button {
+  background: linear-gradient(180deg, #f58c8a, var(--color-alert));
+}
+
+/* Animations */
+
+@keyframes splash {
+  from {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes blast {
+  from {
+    transform: scale(1.8) rotate(-20deg);
+    opacity: 0;
+  }
+}
+
+@keyframes sink {
+  from {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes surface {
+  from {
+    transform: translateY(-0.25rem);
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+}
+
+@keyframes sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ping {
+  from {
+    box-shadow:
+      0 0 0 2px var(--color-signal),
+      0 0 0 0 rgb(255 209 102 / 60%);
+  }
+
+  60% {
+    box-shadow:
+      0 0 0 2px var(--color-signal),
+      0 0 0 0.7rem rgb(255 209 102 / 0%);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 4px rgb(70 213 194 / 20%);
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-signal);
+  outline-offset: 2px;
+}
+
+.cell:focus-visible {
+  outline-offset: 1px;
+  z-index: 7;
+}
+
+/* Responsive tuning */
+
+@media (max-width: 30rem) {
+  :root {
+    --label-size: 0.95rem;
+    --cell-gap: 1px;
+  }
+
+  .controls__group,
+  .controls__group--end {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .controls__group button,
+  .difficulty {
+    flex: 1 1 8rem;
+  }
+
+  .difficulty select {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Phones and small tablets in landscape: keep the boards side by side. */
+@media (max-height: 32rem) and (orientation: landscape) {
+  :root {
+    --board-max: 22rem;
+  }
+
+  .app {
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .app-header {
+    padding-bottom: var(--space-2);
+  }
+
+  .theatre {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  }
+}
+
+@media (min-width: 90rem) {
+  :root {
+    --board-max: 34rem;
+  }
+}
+
+/* Touch devices get roomier hit areas on the controls. */
+@media (pointer: coarse) {
+  .controls button,
+  .difficulty select,
+  .ship {
+    min-height: 2.9rem;
+  }
+
+  .cell:hover:not(:disabled):not([aria-disabled='true']) {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .cell:hover:not(:disabled):not([aria-disabled='true']) {
+    transform: none;
+  }
+}

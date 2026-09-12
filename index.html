@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#04121f" />
+    <title>Battleship</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <span class="app-header__crest" aria-hidden="true">
+          <!-- Project drawn crest: compass rose over a sonar sweep. -->
+          <svg viewBox="0 0 48 48" focusable="false">
+            <circle class="crest__ring" cx="24" cy="24" r="21" />
+            <circle class="crest__ring crest__ring--inner" cx="24" cy="24" r="13" />
+            <path class="crest__needle" d="M24 5 L28 24 L24 43 L20 24 Z" />
+            <path class="crest__needle crest__needle--dim" d="M5 24 L24 20 L43 24 L24 28 Z" />
+            <circle class="crest__core" cx="24" cy="24" r="2.5" />
+          </svg>
+        </span>
+        <div class="app-header__text">
+          <p class="app-header__eyebrow">Naval Command</p>
+          <h1>Battleship</h1>
+        </div>
+      </header>
+
+      <div class="console">
+        <section class="controls" aria-label="Game controls">
+          <div class="controls__group">
+            <button type="button" id="new-game">New Game</button>
+            <button type="button" id="random">Random</button>
+            <button type="button" id="reset">Reset</button>
+            <button type="button" id="orientation" aria-pressed="false">
+              Orientation: Horizontal
+            </button>
+          </div>
+
+          <div class="controls__group controls__group--end">
+            <label class="difficulty" for="difficulty">
+              <span class="difficulty__label">Difficulty</span>
+              <select id="difficulty" name="difficulty">
+                <option value="easy" selected>Easy</option>
+                <option value="hard">Hard</option>
+              </select>
+            </label>
+            <button type="button" id="start-battle" class="button--primary" disabled>
+              Start Battle
+            </button>
+          </div>
+        </section>
+
+        <section class="status" aria-label="Game status">
+          <div class="status__badges">
+            <p class="status__turn" id="turn-indicator">Deployment</p>
+            <p class="status__difficulty" id="difficulty-badge" data-difficulty="easy">
+              Easy opponent
+            </p>
+            <p class="status__resumed" id="resume-badge" hidden>Resumed</p>
+          </div>
+          <p class="status__message" id="status-message" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <main class="theatre">
+        <section class="panel" aria-labelledby="player-board-title">
+          <div class="panel__header">
+            <h2 id="player-board-title">Your waters</h2>
+            <p class="panel__strength" id="player-strength" data-side="player"></p>
+          </div>
+
+          <div
+            class="board"
+            id="player-board"
+            role="group"
+            aria-labelledby="player-board-title"
+          ></div>
+
+          <div class="fleet" aria-labelledby="fleet-title">
+            <h3 class="fleet__title" id="fleet-title">Your fleet</h3>
+            <p class="fleet__hint" id="fleet-hint">
+              Select a ship, press <kbd>R</kbd> to rotate and click a cell on your board. Click a
+              placed ship to take it back.
+            </p>
+            <div class="fleet-roster" id="fleet-roster"></div>
+          </div>
+        </section>
+
+        <section class="panel panel--enemy" aria-labelledby="enemy-board-title">
+          <div class="panel__header">
+            <h2 id="enemy-board-title">Enemy waters</h2>
+            <p class="panel__strength" id="enemy-strength" data-side="enemy"></p>
+          </div>
+
+          <div
+            class="board"
+            id="enemy-board"
+            role="group"
+            aria-labelledby="enemy-board-title"
+          ></div>
+
+          <div class="fleet" aria-labelledby="enemy-fleet-title">
+            <h3 class="fleet__title" id="enemy-fleet-title">Enemy fleet</h3>
+            <div class="fleet-roster" id="enemy-roster"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="result" id="result" hidden>
+      <div class="result__card" role="alertdialog" aria-labelledby="result-title" aria-modal="true">
+        <span class="result__seal" aria-hidden="true">
+          <!-- Project drawn seal: a wreath framing the battle outcome. -->
+          <svg viewBox="0 0 64 64" focusable="false">
+            <circle class="seal__ring" cx="32" cy="32" r="26" />
+            <path class="seal__wave" d="M8 38q8-6 16 0t16 0 16 0" />
+            <path class="seal__wave seal__wave--low" d="M8 46q8-6 16 0t16 0 16 0" />
+            <path
+              class="seal__star"
+              d="M32 12 L36 26 L50 26 L39 34 L43 48 L32 40 L21 48 L25 34 L14 26 L28 26 Z"
+            />
+          </svg>
+        </span>
+        <p class="result__eyebrow">Battle report</p>
+        <h2 class="result__title" id="result-title"></h2>
+        <p class="result__detail" id="result-detail"></p>
+        <button type="button" class="button--primary" id="result-restart">New Game</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
