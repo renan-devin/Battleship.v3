@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#04121f" />
-    <title>Battleship</title>
+    <title>Battleship v3</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -25,6 +25,14 @@
         <div class="app-header__text">
           <p class="app-header__eyebrow">Naval Command</p>
           <h1>Battleship</h1>
+        </div>
+        <div class="commander" id="commander" hidden>
+          <p class="commander__eyebrow">Commander</p>
+          <p class="commander__name" id="commander-name"></p>
+          <div class="commander__actions">
+            <button type="button" id="open-ranking">Ranking</button>
+            <button type="button" id="change-name">Change name</button>
+          </div>
         </div>
       </header>
 
@@ -60,6 +68,7 @@
               Easy opponent
             </p>
             <p class="status__resumed" id="resume-badge" hidden>Resumed</p>
+            <p class="status__record" id="record-badge" hidden></p>
           </div>
           <p class="status__message" id="status-message" aria-live="polite"></p>
         </section>
@@ -127,7 +136,83 @@
         <p class="result__eyebrow">Battle report</p>
         <h2 class="result__title" id="result-title"></h2>
         <p class="result__detail" id="result-detail"></p>
-        <button type="button" class="button--primary" id="result-restart">New Game</button>
+        <p class="result__record" id="result-record"></p>
+        <div class="result__actions">
+          <button type="button" class="button--primary" id="result-restart">New Game</button>
+          <button type="button" class="button--ghost" id="result-ranking">Ranking</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="result profile-gate" id="profile-gate" hidden>
+      <form
+        class="result__card"
+        id="profile-form"
+        role="dialog"
+        aria-labelledby="profile-title"
+        aria-modal="true"
+        novalidate
+      >
+        <p class="result__eyebrow">Naval Command</p>
+        <h2 class="result__title" id="profile-title">Report for duty</h2>
+        <p class="result__detail">
+          Enter the name that will sign your battle reports and appear on the ranking.
+        </p>
+        <label class="profile-field" for="profile-name">
+          <span class="profile-field__label">Commander name</span>
+          <input
+            type="text"
+            id="profile-name"
+            name="name"
+            maxlength="24"
+            autocomplete="nickname"
+            required
+          />
+        </label>
+        <p class="profile-field__error" id="profile-error" aria-live="polite"></p>
+        <div class="result__actions">
+          <button type="submit" class="button--primary" id="profile-submit">Take command</button>
+          <button type="button" class="button--ghost" id="profile-cancel" hidden>Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="result ranking" id="ranking" hidden>
+      <div
+        class="result__card ranking__card"
+        role="dialog"
+        aria-labelledby="ranking-title"
+        aria-modal="true"
+      >
+        <p class="result__eyebrow">Hall of admirals</p>
+        <h2 class="result__title" id="ranking-title">Ranking</h2>
+        <div class="ranking__filter" role="group" aria-label="Ranking filter">
+          <button type="button" data-ranking-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-ranking-filter="easy" aria-pressed="false">Easy</button>
+          <button type="button" data-ranking-filter="hard" aria-pressed="false">Hard</button>
+        </div>
+        <p class="ranking__summary" id="ranking-summary"></p>
+        <div class="ranking__table-wrap">
+          <table class="ranking__table">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Commander</th>
+                <th scope="col">Wins</th>
+                <th scope="col">Losses</th>
+                <th scope="col" title="Fewest shots to win">Best</th>
+                <th scope="col" title="Average shots per win">Avg</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-body"></tbody>
+          </table>
+          <p class="ranking__empty" id="ranking-empty" hidden>
+            No battles recorded yet. Win a match to enter the ranking.
+          </p>
+        </div>
+        <div class="result__actions">
+          <button type="button" class="button--primary" id="ranking-close">Close</button>
+        </div>
       </div>
     </div>
 

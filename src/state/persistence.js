@@ -18,8 +18,8 @@ import {
   isShipSunk,
 } from '../engine/index.js';
 
-export const STORAGE_KEY = 'battleship.v2.match';
-export const STORAGE_VERSION = 2;
+export const STORAGE_KEY = 'battleship.v3.match';
+export const STORAGE_VERSION = 3;
 
 const PHASES = ['placement', 'battle', 'victory', 'defeat'];
 const SHIP_IDS = FLEET.map((ship) => ship.id);

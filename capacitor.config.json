@@ -1,0 +1,8 @@
+{
+  "appId": "dev.renan.battleship",
+  "appName": "Battleship",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}
