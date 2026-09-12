@@ -190,12 +190,11 @@ async function mount() {
       return;
     }
 
+    const isFirstProfile = profile === null;
     const nextProfile = profile ? renameProfile(profile, name) : createProfile(name);
-    const greeting = profile
-      ? `Name changed to ${nextProfile.name}.`
-      : `Welcome aboard, ${nextProfile.name}.`;
+    const saved = await profileRepository.saveProfile(nextProfile);
 
-    if (!(await profileRepository.saveProfile(nextProfile))) {
+    if (!saved && !isFirstProfile) {
       if (profileError) {
         profileError.textContent = 'Could not save the profile. Check that storage is available.';
       }
@@ -203,10 +202,17 @@ async function mount() {
       return;
     }
 
+    // Without storage the first profile still lets the player in; it just
+    // lives in memory for this session.
     profile = nextProfile;
     closeProfileGate();
     renderProfile();
-    announce(greeting);
+    announce(
+      isFirstProfile
+        ? `Welcome aboard, ${nextProfile.name}.` +
+            (saved ? '' : ' Storage is unavailable: profile and ranking will not survive a reload.')
+        : `Name changed to ${nextProfile.name}.`,
+    );
   });
 
   profileCancel?.addEventListener('click', closeProfileGate);
