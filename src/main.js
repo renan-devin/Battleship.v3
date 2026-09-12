@@ -29,7 +29,13 @@ import {
   startNewGame,
   toggleOrientation,
 } from './state/index.js';
-import { clearState, loadState, saveState } from './state/persistence.js';
+import { createProfile, normalizeName, renameProfile } from './state/profile.js';
+import {
+  createLocalMatchRepository,
+  createLocalProfileRepository,
+  createLocalStatsRepository,
+} from './state/repository.js';
+import { createMatchRecord, rankProfiles, recordMatch, summarizeProfile } from './state/stats.js';
 import {
   formatCoordinate,
   getPreviewCells,
@@ -64,7 +70,7 @@ function getStorage() {
   }
 }
 
-function mount() {
+async function mount() {
   const playerBoard = document.querySelector('#player-board');
   const enemyBoard = document.querySelector('#enemy-board');
   const fleetRoster = document.querySelector('#fleet-roster');
@@ -84,6 +90,19 @@ function mount() {
   const result = document.querySelector('#result');
   const resultTitle = document.querySelector('#result-title');
   const resultDetail = document.querySelector('#result-detail');
+  const resultRecord = document.querySelector('#result-record');
+  const recordBadge = document.querySelector('#record-badge');
+  const commander = document.querySelector('#commander');
+  const commanderName = document.querySelector('#commander-name');
+  const profileGate = document.querySelector('#profile-gate');
+  const profileForm = document.querySelector('#profile-form');
+  const profileInput = document.querySelector('#profile-name');
+  const profileError = document.querySelector('#profile-error');
+  const profileCancel = document.querySelector('#profile-cancel');
+  const ranking = document.querySelector('#ranking');
+  const rankingBody = document.querySelector('#ranking-body');
+  const rankingEmpty = document.querySelector('#ranking-empty');
+  const rankingSummary = document.querySelector('#ranking-summary');
 
   if (!playerBoard || !enemyBoard || !fleetRoster || !enemyRoster) {
     return;
@@ -94,13 +113,241 @@ function mount() {
   const shipRows = renderFleetRoster(fleetRoster);
   const enemyShipRows = renderFleetRoster(enemyRoster, { interactive: false });
 
+  // The game only talks to the repositories; swapping them for remote ones
+  // (see src/state/repository.js) leaves everything below untouched.
   const storage = getStorage();
-  const restored = loadState(storage);
+  const matchRepository = createLocalMatchRepository(storage);
+  const profileRepository = createLocalProfileRepository(storage);
+  const statsRepository = createLocalStatsRepository(storage);
+
+  const restored = await matchRepository.getMatch();
 
   let state = restored ?? createInitialState();
   let hoveredCell = null;
   let enemyTurnTimer = null;
   let resumed = restored !== null;
+  let profile = await profileRepository.getProfile();
+  let stats = await statsRepository.getStats();
+  let lastRecord = null;
+  let rankingFilter = 'all';
+  // Match writes are chained so they reach the repository in game order even
+  // when the implementation is asynchronous (e.g. a remote API).
+  let matchWrites = Promise.resolve();
+
+  function persistMatch(write) {
+    matchWrites = matchWrites.then(write, write).catch(() => {
+      announce('The match could not be saved.');
+    });
+  }
+
+  function renderProfile() {
+    if (commander) {
+      commander.hidden = !profile;
+    }
+
+    if (commanderName) {
+      commanderName.textContent = profile?.name ?? '';
+    }
+  }
+
+  function openProfileGate({ cancellable }) {
+    if (!profileGate || !profileInput) {
+      return;
+    }
+
+    profileGate.hidden = false;
+    profileInput.value = profile?.name ?? '';
+
+    if (profileError) {
+      profileError.textContent = '';
+    }
+
+    if (profileCancel) {
+      profileCancel.hidden = !cancellable;
+    }
+
+    profileInput.focus();
+    profileInput.select();
+  }
+
+  function closeProfileGate() {
+    if (profileGate) {
+      profileGate.hidden = true;
+    }
+  }
+
+  profileForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const name = normalizeName(profileInput.value);
+
+    if (!name) {
+      if (profileError) {
+        profileError.textContent = 'Enter a name to take command.';
+      }
+
+      profileInput.focus();
+      return;
+    }
+
+    const isFirstProfile = profile === null;
+    const nextProfile = profile ? renameProfile(profile, name) : createProfile(name);
+    const saved = await profileRepository.saveProfile(nextProfile);
+
+    if (!saved && !isFirstProfile) {
+      if (profileError) {
+        profileError.textContent = 'Could not save the profile. Check that storage is available.';
+      }
+
+      return;
+    }
+
+    // Without storage the first profile still lets the player in; it just
+    // lives in memory for this session.
+    profile = nextProfile;
+    closeProfileGate();
+    renderProfile();
+    announce(
+      isFirstProfile
+        ? `Welcome aboard, ${nextProfile.name}.` +
+            (saved ? '' : ' Storage is unavailable: profile and ranking will not survive a reload.')
+        : `Name changed to ${nextProfile.name}.`,
+    );
+  });
+
+  profileCancel?.addEventListener('click', closeProfileGate);
+  document.querySelector('#change-name')?.addEventListener('click', () => {
+    openProfileGate({ cancellable: true });
+  });
+
+  function formatShots(value) {
+    return value === null ? '-' : Number.isInteger(value) ? String(value) : value.toFixed(1);
+  }
+
+  function renderRanking() {
+    if (!rankingBody || !ranking || ranking.hidden) {
+      return;
+    }
+
+    const difficulty = rankingFilter === 'all' ? undefined : rankingFilter;
+    const names = profile ? { [profile.id]: profile.name } : {};
+    const rows = rankProfiles(stats, { difficulty, names });
+
+    rankingBody.replaceChildren(
+      ...rows.map((entry) => {
+        const row = document.createElement('tr');
+        row.dataset.current = String(entry.profileId === profile?.id);
+
+        const cells = [
+          entry.rank,
+          entry.name ?? 'Unknown commander',
+          entry.victories,
+          entry.defeats,
+          formatShots(entry.bestShots),
+          formatShots(entry.averageShots),
+        ];
+
+        for (const value of cells) {
+          const cell = document.createElement('td');
+          cell.textContent = String(value);
+          row.append(cell);
+        }
+
+        return row;
+      }),
+    );
+
+    if (rankingEmpty) {
+      rankingEmpty.hidden = rows.length > 0;
+    }
+
+    if (rankingSummary) {
+      if (!profile) {
+        rankingSummary.textContent = '';
+      } else {
+        const summary = summarizeProfile(stats, profile.id, { difficulty });
+        rankingSummary.textContent =
+          summary.played === 0
+            ? `${profile.name}: no battles recorded yet.`
+            : `${profile.name}: ${summary.victories} wins, ${summary.defeats} losses` +
+              (summary.bestShots === null
+                ? '.'
+                : `, best victory in ${summary.bestShots} shots (avg ${formatShots(summary.averageShots)}).`);
+      }
+    }
+
+    for (const button of ranking.querySelectorAll('[data-ranking-filter]')) {
+      button.setAttribute('aria-pressed', String(button.dataset.rankingFilter === rankingFilter));
+    }
+  }
+
+  async function openRanking() {
+    if (!ranking) {
+      return;
+    }
+
+    stats = await statsRepository.getStats();
+    ranking.hidden = false;
+    renderRanking();
+    document.querySelector('#ranking-close')?.focus();
+  }
+
+  function closeRanking() {
+    if (ranking) {
+      ranking.hidden = true;
+    }
+  }
+
+  document.querySelector('#open-ranking')?.addEventListener('click', openRanking);
+  document.querySelector('#result-ranking')?.addEventListener('click', openRanking);
+  document.querySelector('#ranking-close')?.addEventListener('click', closeRanking);
+
+  ranking?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-ranking-filter]');
+
+    if (button) {
+      rankingFilter = button.dataset.rankingFilter;
+      renderRanking();
+    }
+  });
+
+  /** Writes the finished match to the statistics, once, when the phase flips to an outcome. */
+  async function recordOutcome(previousState, nextState) {
+    if (isGameOver(previousState) || !isGameOver(nextState) || !profile) {
+      return;
+    }
+
+    const record = createMatchRecord(nextState, {
+      profileId: profile.id,
+      profileName: profile.name,
+    });
+    const nextStats = recordMatch(await statsRepository.getStats(), record);
+
+    if (!(await statsRepository.saveStats(nextStats))) {
+      announce('The result could not be saved to the ranking.');
+      return;
+    }
+
+    stats = nextStats;
+    lastRecord = record;
+    renderRecord();
+    renderRanking();
+  }
+
+  function renderRecord() {
+    const recorded = lastRecord !== null && isGameOver(state);
+
+    if (recordBadge) {
+      recordBadge.hidden = !recorded;
+      recordBadge.textContent = recorded ? 'Recorded' : '';
+    }
+
+    if (resultRecord) {
+      resultRecord.textContent = recorded
+        ? `Result recorded for ${profile?.name ?? 'you'} on ${lastRecord.difficulty} difficulty.`
+        : '';
+    }
+  }
 
   function announce(message) {
     if (statusMessage) {
@@ -230,8 +477,11 @@ function mount() {
     }
 
     const victory = state.phase === 'victory';
+    const name = profile?.name;
     result.dataset.outcome = victory ? 'victory' : 'defeat';
-    resultTitle.textContent = victory ? 'Enemy fleet destroyed' : 'Your fleet is lost';
+    resultTitle.textContent = victory
+      ? `${name ? `${name}, ` : ''}enemy fleet destroyed`
+      : `${name ? `${name}, ` : ''}your fleet is lost`;
     resultDetail.textContent = victory
       ? `You sank every enemy ship in ${state.playerShots.length} shots.`
       : `The enemy sank your fleet in ${state.enemyShots.length} shots.`;
@@ -269,17 +519,27 @@ function mount() {
     renderTurn();
     renderPanelFocus();
     renderResult();
+    renderRecord();
+    renderProfile();
   }
 
   function update(nextState, message, { keepResumeBadge = false, persist = true } = {}) {
+    const previousState = state;
+
     state = nextState;
     resumed = resumed && keepResumeBadge;
 
     if (persist) {
-      saveState(storage, state);
+      const snapshot = state;
+      persistMatch(() => matchRepository.saveMatch(snapshot));
+    }
+
+    if (!isGameOver(nextState)) {
+      lastRecord = null;
     }
 
     render();
+    recordOutcome(previousState, nextState);
 
     if (message) {
       announce(message);
@@ -463,7 +723,7 @@ function mount() {
 
   function newGame() {
     clearTimeout(enemyTurnTimer);
-    clearState(storage);
+    persistMatch(() => matchRepository.clearMatch());
     update(startNewGame(state), 'New game. Place your fleet.', { persist: false });
   }
 
@@ -491,6 +751,10 @@ function mount() {
     }
   } else {
     announce('Place your fleet: select a ship, press R to rotate and click a cell.');
+  }
+
+  if (!profile) {
+    openProfileGate({ cancellable: false });
   }
 }
 

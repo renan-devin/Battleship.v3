@@ -1,5 +1,5 @@
 {
-  "name": "battleship-v2",
+  "name": "battleship-v3",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -10,7 +10,9 @@
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "cap:sync": "npm run build && npx cap sync android",
+    "cap:open": "npx cap open android"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -20,5 +22,10 @@
     "prettier": "^3.9.6",
     "vite": "^6.4.3",
     "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.1",
+    "@capacitor/cli": "8.5.1",
+    "@capacitor/core": "8.5.1"
   }
 }
