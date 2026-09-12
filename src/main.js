@@ -29,7 +29,7 @@ import {
   startNewGame,
   toggleOrientation,
 } from './state/index.js';
-import { createProfile, renameProfile } from './state/profile.js';
+import { createProfile, normalizeName, renameProfile } from './state/profile.js';
 import {
   createLocalMatchRepository,
   createLocalProfileRepository,
@@ -170,11 +170,9 @@ async function mount() {
   profileForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const nextProfile = profile
-      ? renameProfile(profile, profileInput.value)
-      : createProfile(profileInput.value);
+    const name = normalizeName(profileInput.value);
 
-    if (!nextProfile) {
+    if (!name) {
       if (profileError) {
         profileError.textContent = 'Enter a name to take command.';
       }
@@ -183,12 +181,20 @@ async function mount() {
       return;
     }
 
+    const nextProfile = profile ? renameProfile(profile, name) : createProfile(name);
     const greeting = profile
       ? `Name changed to ${nextProfile.name}.`
       : `Welcome aboard, ${nextProfile.name}.`;
 
+    if (!(await profileRepository.saveProfile(nextProfile))) {
+      if (profileError) {
+        profileError.textContent = 'Could not save the profile. Check that storage is available.';
+      }
+
+      return;
+    }
+
     profile = nextProfile;
-    await profileRepository.saveProfile(profile);
     closeProfileGate();
     renderProfile();
     announce(greeting);
@@ -260,11 +266,12 @@ async function mount() {
     }
   }
 
-  function openRanking() {
+  async function openRanking() {
     if (!ranking) {
       return;
     }
 
+    stats = await statsRepository.getStats();
     ranking.hidden = false;
     renderRanking();
     document.querySelector('#ranking-close')?.focus();
@@ -295,12 +302,19 @@ async function mount() {
       return;
     }
 
-    lastRecord = createMatchRecord(nextState, {
+    const record = createMatchRecord(nextState, {
       profileId: profile.id,
       profileName: profile.name,
     });
-    stats = recordMatch(stats, lastRecord);
-    await statsRepository.saveStats(stats);
+    const nextStats = recordMatch(await statsRepository.getStats(), record);
+
+    if (!(await statsRepository.saveStats(nextStats))) {
+      announce('The result could not be saved to the ranking.');
+      return;
+    }
+
+    stats = nextStats;
+    lastRecord = record;
     renderRecord();
     renderRanking();
   }
