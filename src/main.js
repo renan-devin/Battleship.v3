@@ -130,6 +130,15 @@ async function mount() {
   let stats = await statsRepository.getStats();
   let lastRecord = null;
   let rankingFilter = 'all';
+  // Match writes are chained so they reach the repository in game order even
+  // when the implementation is asynchronous (e.g. a remote API).
+  let matchWrites = Promise.resolve();
+
+  function persistMatch(write) {
+    matchWrites = matchWrites.then(write, write).catch(() => {
+      announce('The match could not be saved.');
+    });
+  }
 
   function renderProfile() {
     if (commander) {
@@ -515,7 +524,8 @@ async function mount() {
     resumed = resumed && keepResumeBadge;
 
     if (persist) {
-      matchRepository.saveMatch(state);
+      const snapshot = state;
+      persistMatch(() => matchRepository.saveMatch(snapshot));
     }
 
     if (!isGameOver(nextState)) {
@@ -707,7 +717,7 @@ async function mount() {
 
   function newGame() {
     clearTimeout(enemyTurnTimer);
-    matchRepository.clearMatch();
+    persistMatch(() => matchRepository.clearMatch());
     update(startNewGame(state), 'New game. Place your fleet.', { persist: false });
   }
 

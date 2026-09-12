@@ -77,7 +77,7 @@ validate everything they read and are covered by `tests/profile.test.js`,
 
 - Node.js 20 or newer
 - npm 9 or newer
-- For the Android build: JDK 17+, Android Studio with the Android SDK (API 36)
+- For the Android build: JDK 21 (Capacitor 8 compiles with Java 21), Android Studio with the Android SDK (API 36)
 
 ## Play online
 
